@@ -1,5 +1,3 @@
-// File: src/screens/onboarding/FeaturesScreen.tsx
-
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -33,7 +31,7 @@ export default function FeaturesScreen() {
     navigation.navigate('Done');
   };
 
-  const renderItem = ({ item }: { item: typeof features[0] }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.icon}>{item.icon}</Text>
       <Text style={styles.title}>{item.title}</Text>

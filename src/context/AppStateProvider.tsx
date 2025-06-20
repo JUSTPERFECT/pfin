@@ -8,20 +8,42 @@ export const AppStateProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.clear();
-    AsyncStorage.getItem('hasOnboarded').then(value => {
-      setHasOnboarded(value === 'true');
-      setLoading(false);
-    });
+    const init = async () => {
+      try {
+        // TEMPORARY: Force clear storage to test onboarding
+        await AsyncStorage.clear();
+        console.log('🗑️ Cleared storage - forcing onboarding');
+        
+        const value = await AsyncStorage.getItem('hasOnboarded');
+        setHasOnboarded(value === 'true');
+        console.log('📱 hasOnboarded:', value === 'true');
+      } catch (error) {
+        console.error('Init error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
-  const setOnboarded = () => {
-    setHasOnboarded(true);
+  const setOnboarded = async (value) => {
+    console.log('✅ Setting hasOnboarded to:', value);
+    setHasOnboarded(value);
+    try {
+      await AsyncStorage.setItem('hasOnboarded', value.toString());
+      console.log('💾 Saved hasOnboarded to storage');
+    } catch (error) {
+      console.error('Save error:', error);
+    }
   };
+
+  if (loading) return null;
+
+  console.log('🔄 Rendering app with hasOnboarded:', hasOnboarded);
 
   return (
     <AppStateContext.Provider value={{ hasOnboarded, setHasOnboarded: setOnboarded }}>
-      {!loading && children}
+      {children}
     </AppStateContext.Provider>
   );
 };
