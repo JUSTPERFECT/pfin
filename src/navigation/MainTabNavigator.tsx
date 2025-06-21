@@ -1,3 +1,4 @@
+// src/navigation/MainTabNavigator.tsx
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,7 +7,10 @@ import CalendarScreen from '../screens/core/CalendarScreen';
 import InsightsScreen from '../screens/core/InsightsScreen';
 import SettingsScreen from '../screens/core/SettingsScreen';
 
-const Tab = createBottomTabNavigator();
+// ✅ ADDED: Import proper types
+import type { MainTabParamList } from '../types/navigation';
+
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export function MainTabNavigator() {
   return (

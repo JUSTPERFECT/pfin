@@ -1,3 +1,4 @@
+// src/screens/core/SettingsScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -14,6 +15,12 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ✅ FIXED: Use proper imports and validation
+import { LoadingSpinner, ErrorState } from '../../components/LoadingStates';
+import { useFormValidation, createProfileValidator, createBudgetValidator } from '../../utils/validation';
+import { useMainTabNavigation } from '../../types/navigation';
+
+// Interfaces
 interface UserSettings {
   monthlyBudget: number;
   currency: string;
@@ -40,6 +47,10 @@ const CURRENCIES = [
 ];
 
 export default function SettingsScreen() {
+  // ✅ FIXED: Use typed navigation
+  const navigation = useMainTabNavigation();
+
+  // State management
   const [settings, setSettings] = useState<UserSettings>({
     monthlyBudget: 0,
     currency: '₹',
@@ -53,99 +64,147 @@ export default function SettingsScreen() {
   const [profile, setProfile] = useState<UserProfile>({
     name: 'User',
     email: 'user@example.com',
-    joinDate: '2025-01-01',
+    joinDate: new Date().toISOString().split('T')[0],
   });
 
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Modal states
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [tempBudget, setTempBudget] = useState('');
-  const [tempName, setTempName] = useState('');
-  const [tempEmail, setTempEmail] = useState('');
 
+  // ✅ FIXED: Use proper validation for profile
+  const profileValidation = useFormValidation(createProfileValidator(), {
+    name: profile.name,
+    email: profile.email,
+  });
+
+  // ✅ FIXED: Use proper validation for budget
+  const budgetValidation = useFormValidation(createBudgetValidator(), {
+    monthlyBudget: settings.monthlyBudget.toString(),
+    currency: settings.currency,
+  });
+
+  // Effects
   useEffect(() => {
-    loadSettings();
-    loadProfile();
+    loadData();
   }, []);
 
-  const loadSettings = async () => {
+  // ✅ IMPROVED: Better data loading with error handling
+  const loadData = async () => {
     try {
-      const userSettings = await AsyncStorage.getItem('userSettings');
+      setIsLoading(true);
+      setError(null);
+
+      const [userSettings, userProfile] = await Promise.all([
+        AsyncStorage.getItem('userSettings'),
+        AsyncStorage.getItem('userProfile'),
+      ]);
+
       if (userSettings) {
         const parsed = JSON.parse(userSettings);
         setSettings(prev => ({ ...prev, ...parsed }));
       }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  };
 
-  const loadProfile = async () => {
-    try {
-      const userProfile = await AsyncStorage.getItem('userProfile');
       if (userProfile) {
-        setProfile(JSON.parse(userProfile));
+        const parsed = JSON.parse(userProfile);
+        setProfile(parsed);
+        // Update form data when profile loads
+        profileValidation.updateField('name', parsed.name);
+        profileValidation.updateField('email', parsed.email);
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
+    } catch (err) {
+      console.error('Error loading settings:', err);
+      setError('Failed to load settings');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // ✅ IMPROVED: Better save functions with error handling
   const saveSettings = async (newSettings: UserSettings) => {
     try {
+      setIsSaving(true);
       await AsyncStorage.setItem('userSettings', JSON.stringify(newSettings));
       setSettings(newSettings);
     } catch (error) {
       console.error('Error saving settings:', error);
       Alert.alert('Error', 'Failed to save settings');
+      throw error;
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const saveProfile = async (newProfile: UserProfile) => {
     try {
+      setIsSaving(true);
       await AsyncStorage.setItem('userProfile', JSON.stringify(newProfile));
       setProfile(newProfile);
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile');
+      throw error;
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleToggleSetting = (key: keyof UserSettings) => {
+  // Event handlers
+  const handleToggleSetting = async (key: keyof UserSettings) => {
     const newSettings = { ...settings, [key]: !settings[key] };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   };
 
-  const handleBudgetUpdate = () => {
-    const budgetValue = parseFloat(tempBudget);
-    if (!tempBudget || isNaN(budgetValue) || budgetValue <= 0) {
-      Alert.alert('Error', 'Please enter a valid budget amount');
+  const handleBudgetUpdate = async () => {
+    if (!budgetValidation.validateForm()) {
       return;
     }
 
-    const newSettings = { ...settings, monthlyBudget: budgetValue };
-    saveSettings(newSettings);
-    setShowBudgetModal(false);
-    setTempBudget('');
+    try {
+      const budgetValue = parseFloat(budgetValidation.formData.monthlyBudget);
+      const newSettings = { ...settings, monthlyBudget: budgetValue };
+      await saveSettings(newSettings);
+      setShowBudgetModal(false);
+      budgetValidation.resetValidation();
+      Alert.alert('Success', 'Budget updated successfully');
+    } catch (error) {
+      // Error already handled in saveSettings
+    }
   };
 
-  const handleCurrencyUpdate = (currency: string) => {
-    const newSettings = { ...settings, currency };
-    saveSettings(newSettings);
-    setShowCurrencyModal(false);
+  const handleCurrencyUpdate = async (currency: string) => {
+    try {
+      const newSettings = { ...settings, currency };
+      await saveSettings(newSettings);
+      setShowCurrencyModal(false);
+    } catch (error) {
+      // Error already handled in saveSettings
+    }
   };
 
-  const handleProfileUpdate = () => {
-    if (!tempName.trim() || !tempEmail.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleProfileUpdate = async () => {
+    if (!profileValidation.validateForm()) {
       return;
     }
 
-    const newProfile = { ...profile, name: tempName.trim(), email: tempEmail.trim() };
-    saveProfile(newProfile);
-    setShowProfileModal(false);
-    setTempName('');
-    setTempEmail('');
+    try {
+      const newProfile = { 
+        ...profile, 
+        name: profileValidation.formData.name.trim(), 
+        email: profileValidation.formData.email.trim() 
+      };
+      await saveProfile(newProfile);
+      setShowProfileModal(false);
+      profileValidation.resetValidation();
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      // Error already handled in saveProfile
+    }
   };
 
   const handleExportData = async () => {
@@ -197,7 +256,7 @@ export default function SettingsScreen() {
               setProfile({
                 name: 'User',
                 email: 'user@example.com',
-                joinDate: '2025-01-01',
+                joinDate: new Date().toISOString().split('T')[0],
               });
             } catch (error) {
               Alert.alert('Error', 'Failed to clear data');
@@ -208,6 +267,7 @@ export default function SettingsScreen() {
     );
   };
 
+  // ✅ IMPROVED: Better component with proper TypeScript
   const SettingRow = ({ 
     icon, 
     title, 
@@ -217,7 +277,8 @@ export default function SettingsScreen() {
     value,
     toggle = false,
     toggleValue = false,
-    onToggle
+    onToggle,
+    danger = false,
   }: {
     icon: string;
     title: string;
@@ -228,12 +289,17 @@ export default function SettingsScreen() {
     toggle?: boolean;
     toggleValue?: boolean;
     onToggle?: () => void;
+    danger?: boolean;
   }) => (
-    <TouchableOpacity style={styles.settingRow} onPress={onPress} disabled={toggle}>
+    <TouchableOpacity 
+      style={[styles.settingRow, danger && styles.dangerRow]} 
+      onPress={onPress} 
+      disabled={toggle}
+    >
       <View style={styles.settingLeft}>
         <Text style={styles.settingIcon}>{icon}</Text>
         <View style={styles.settingText}>
-          <Text style={styles.settingTitle}>{title}</Text>
+          <Text style={[styles.settingTitle, danger && styles.dangerText]}>{title}</Text>
           {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
         </View>
       </View>
@@ -256,6 +322,27 @@ export default function SettingsScreen() {
   const SectionHeader = ({ title }: { title: string }) => (
     <Text style={styles.sectionHeader}>{title}</Text>
   );
+
+  // ✅ IMPROVED: Proper loading and error states
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingSpinner text="Loading settings..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState
+          title="Failed to load settings"
+          description={error}
+          onRetry={() => loadData()}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -282,8 +369,8 @@ export default function SettingsScreen() {
           <TouchableOpacity 
             style={styles.editButton}
             onPress={() => {
-              setTempName(profile.name);
-              setTempEmail(profile.email);
+              profileValidation.updateField('name', profile.name);
+              profileValidation.updateField('email', profile.email);
               setShowProfileModal(true);
             }}
           >
@@ -297,10 +384,11 @@ export default function SettingsScreen() {
           <SettingRow
             icon="💰"
             title="Monthly Budget"
-            subtitle={`Your current monthly spending limit`}
+            subtitle="Your current monthly spending limit"
             value={`${settings.currency}${settings.monthlyBudget || 'Not set'}`}
             onPress={() => {
-              setTempBudget(settings.monthlyBudget.toString());
+              budgetValidation.updateField('monthlyBudget', settings.monthlyBudget.toString());
+              budgetValidation.updateField('currency', settings.currency);
               setShowBudgetModal(true);
             }}
           />
@@ -384,23 +472,14 @@ export default function SettingsScreen() {
             subtitle="Rate us on the App Store"
             onPress={() => Alert.alert('Rate App', 'Thanks for your support!')}
           />
-        </View>
-
-        {/* Danger Zone */}
-        <SectionHeader title="Danger Zone" />
-        <View style={styles.settingsSection}>
-          <TouchableOpacity style={styles.dangerRow} onPress={handleClearData}>
-            <Text style={styles.dangerIcon}>🗑️</Text>
-            <View style={styles.dangerText}>
-              <Text style={styles.dangerTitle}>Clear All Data</Text>
-              <Text style={styles.dangerSubtitle}>Permanently delete all your data</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Version 1.0.0</Text>
-          <Text style={styles.footerText}>© 2025 Financial Tracker</Text>
+          <SettingRow
+            icon="🗑️"
+            title="Clear All Data"
+            subtitle="Permanently delete all app data"
+            onPress={handleClearData}
+            showArrow={true}
+            danger={true}
+          />
         </View>
       </ScrollView>
 
@@ -408,24 +487,42 @@ export default function SettingsScreen() {
       <Modal visible={showBudgetModal} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowBudgetModal(false)}>
+            <TouchableOpacity onPress={() => {
+              setShowBudgetModal(false);
+              budgetValidation.resetValidation();
+            }}>
               <Text style={styles.modalCancel}>Cancel</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Update Budget</Text>
-            <TouchableOpacity onPress={handleBudgetUpdate}>
-              <Text style={styles.modalSave}>Save</Text>
+            <TouchableOpacity 
+              onPress={handleBudgetUpdate}
+              disabled={isSaving}
+            >
+              <Text style={[styles.modalSave, isSaving && styles.modalSaveDisabled]}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={styles.modalContent}>
-            <Text style={styles.inputLabel}>Monthly Budget ({settings.currency})</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter monthly budget"
-              keyboardType="numeric"
-              value={tempBudget}
-              onChangeText={setTempBudget}
-              autoFocus
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Monthly Budget Amount</Text>
+              <TextInput
+                style={[
+                  styles.budgetInput, 
+                  budgetValidation.hasFieldError('monthlyBudget') && styles.inputError
+                ]}
+                placeholder="Enter amount"
+                keyboardType="numeric"
+                value={budgetValidation.formData.monthlyBudget}
+                onChangeText={(value) => budgetValidation.updateField('monthlyBudget', value)}
+                autoFocus
+              />
+              {budgetValidation.hasFieldError('monthlyBudget') && (
+                <Text style={styles.errorText}>
+                  {budgetValidation.getFieldError('monthlyBudget')}
+                </Text>
+              )}
+            </View>
           </View>
         </SafeAreaView>
       </Modal>
@@ -465,37 +562,56 @@ export default function SettingsScreen() {
       <Modal visible={showProfileModal} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowProfileModal(false)}>
+            <TouchableOpacity onPress={() => {
+              setShowProfileModal(false);
+              profileValidation.resetValidation();
+            }}>
               <Text style={styles.modalCancel}>Cancel</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Edit Profile</Text>
-            <TouchableOpacity onPress={handleProfileUpdate}>
-              <Text style={styles.modalSave}>Save</Text>
+            <TouchableOpacity 
+              onPress={handleProfileUpdate}
+              disabled={isSaving}
+            >
+              <Text style={[styles.modalSave, isSaving && styles.modalSaveDisabled]}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.modalContent}>
+          <ScrollView style={styles.modalContent}>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Name</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input, 
+                  profileValidation.hasFieldError('name') && styles.inputError
+                ]}
                 placeholder="Enter your name"
-                value={tempName}
-                onChangeText={setTempName}
-                autoFocus
+                value={profileValidation.formData.name}
+                onChangeText={(value) => profileValidation.updateField('name', value)}
               />
+              {profileValidation.hasFieldError('name') && (
+                <Text style={styles.errorText}>{profileValidation.getFieldError('name')}</Text>
+              )}
             </View>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input, 
+                  profileValidation.hasFieldError('email') && styles.inputError
+                ]}
                 placeholder="Enter your email"
-                value={tempEmail}
-                onChangeText={setTempEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={profileValidation.formData.email}
+                onChangeText={(value) => profileValidation.updateField('email', value)}
               />
+              {profileValidation.hasFieldError('email') && (
+                <Text style={styles.errorText}>{profileValidation.getFieldError('email')}</Text>
+              )}
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -511,20 +627,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    paddingBottom: 10,
+    padding: 24,
+    paddingBottom: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
   },
   profileCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
     margin: 16,
-    marginTop: 8,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -539,12 +654,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: '#2E7D61',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
   },
   avatarText: {
@@ -609,6 +724,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  dangerRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#FFE6E6',
+    backgroundColor: '#FFFAFA',
+  },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -627,6 +747,9 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: 2,
   },
+  dangerText: {
+    color: '#FF6B6B',
+  },
   settingSubtitle: {
     fontSize: 14,
     color: '#666',
@@ -644,39 +767,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#CCC',
   },
-  dangerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  dangerIcon: {
-    fontSize: 20,
-    marginRight: 16,
-  },
-  dangerText: {
-    flex: 1,
-  },
-  dangerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#E74C3C',
-    marginBottom: 2,
-  },
-  dangerSubtitle: {
-    fontSize: 14,
-    color: '#E74C3C',
-  },
-  footer: {
-    alignItems: 'center',
-    padding: 20,
-    marginTop: 20,
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  // Modal Styles
   modalContainer: {
     flex: 1,
     backgroundColor: '#F8F9FA',
@@ -685,17 +775,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
   },
   modalCancel: {
     fontSize: 16,
-    color: '#6C757D',
+    color: '#666',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#1A1A1A',
   },
   modalSave: {
@@ -703,8 +794,12 @@ const styles = StyleSheet.create({
     color: '#2E7D61',
     fontWeight: '600',
   },
+  modalSaveDisabled: {
+    color: '#999',
+  },
   modalContent: {
-    padding: 20,
+    flex: 1,
+    padding: 16,
   },
   inputGroup: {
     marginBottom: 20,
@@ -716,12 +811,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  budgetInput: {
     borderWidth: 1,
-    borderColor: '#E9ECEF',
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 24,
+    fontWeight: 'bold',
+    backgroundColor: '#FFFFFF',
+    textAlign: 'center',
+  },
+  inputError: {
+    borderColor: '#FF6B6B',
+    borderWidth: 2,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    marginTop: 4,
   },
   currencyOption: {
     flexDirection: 'row',
@@ -729,9 +843,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
   },
   selectedCurrencyOption: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F0FFF4',
   },
   currencyCode: {
     fontSize: 18,

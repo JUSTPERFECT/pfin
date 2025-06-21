@@ -1,5 +1,8 @@
+// src/screens/onboarding/DoneScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+
+// ✅ FIXED: Import proper context for app state management
 import { useAppState } from '../../context/AppStateProvider';
 
 export default function DoneScreen() {

@@ -1,15 +1,21 @@
+// src/screens/onboarding/WelcomeScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+
+// ✅ FIXED: Use proper navigation types
+import { useOnboardingNavigation } from '../../types/navigation';
 
 export default function WelcomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useOnboardingNavigation();
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Smarter way to manage money</Text>
       <Text style={styles.subtitle}>Track, Scan, Learn — All in one place.</Text>
-      <TouchableOpacity onPress={() => navigation.navigate('Features')} style={styles.button}>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('Features')} 
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>

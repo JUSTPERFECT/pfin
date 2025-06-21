@@ -1,3 +1,4 @@
+// src/screens/core/CalendarScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -10,108 +11,24 @@ import {
   TextInput,
   Alert,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Temporary inline components (same as HomeScreen)
-const LoadingSpinner = ({ text = 'Loading...' }: { text?: string }) => (
-  <View style={tempStyles.loadingContainer}>
-    <ActivityIndicator size="large" color="#2E7D61" />
-    <Text style={tempStyles.loadingText}>{text}</Text>
-  </View>
-);
+// ✅ FIXED: Use proper imports instead of inline components
+import { 
+  LoadingSpinner, 
+  ErrorState,
+  LoadingOverlay,
+  InlineLoading 
+} from '../../components/LoadingStates';
 
-const ErrorState = ({ 
-  title, 
-  description, 
-  onRetry 
-}: {
-  title: string;
-  description: string;
-  onRetry?: () => void;
-}) => (
-  <View style={tempStyles.errorState}>
-    <Text style={tempStyles.errorIcon}>😕</Text>
-    <Text style={tempStyles.errorTitle}>{title}</Text>
-    <Text style={tempStyles.errorDescription}>{description}</Text>
-    {onRetry && (
-      <TouchableOpacity style={tempStyles.errorButton} onPress={onRetry}>
-        <Text style={tempStyles.errorButtonText}>Try Again</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
+// ✅ FIXED: Use proper validation instead of inline
+import { useFormValidation, createExpenseValidator } from '../../utils/validation';
 
-const LoadingOverlay = ({ visible, text }: { visible: boolean; text?: string }) => {
-  if (!visible) return null;
-  return (
-    <View style={tempStyles.overlay}>
-      <View style={tempStyles.overlayContent}>
-        <ActivityIndicator size="large" color="#2E7D61" />
-        <Text style={tempStyles.overlayText}>{text || 'Loading...'}</Text>
-      </View>
-    </View>
-  );
-};
+// ✅ FIXED: Use proper navigation types
+import { useMainTabNavigation } from '../../types/navigation';
 
-const InlineLoading = ({ 
-  loading, 
-  text, 
-  loadingText 
-}: { 
-  loading: boolean; 
-  text: string; 
-  loadingText?: string; 
-}) => (
-  <Text style={tempStyles.buttonText}>
-    {loading ? (loadingText || 'Loading...') : text}
-  </Text>
-);
-
-// Simple validation
-const useFormValidation = (validator: any, initialData: any) => {
-  const [formData, setFormData] = useState(initialData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  const updateField = (field: string, value: string) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-  
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Please enter a valid amount';
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = 'Please enter a description';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  const hasFieldError = (field: string) => !!errors[field];
-  const getFieldError = (field: string) => errors[field];
-  const resetValidation = () => {
-    setErrors({});
-    setFormData(initialData);
-  };
-  
-  return {
-    formData,
-    updateField,
-    validateForm,
-    getFieldError,
-    hasFieldError,
-    resetValidation,
-  };
-};
-
+// Interfaces
 interface Expense {
   id: string;
   date: string;
@@ -119,11 +36,6 @@ interface Expense {
   category: string;
   description: string;
   type: 'expense' | 'income';
-}
-
-interface UserSettings {
-  monthlyBudget: number;
-  currency: string;
 }
 
 const EXPENSE_CATEGORIES = [
@@ -136,24 +48,30 @@ const EXPENSE_CATEGORIES = [
   { key: 'other', label: 'Other', icon: '💰', color: '#95A5A6' },
 ];
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default function CalendarScreen() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // ✅ FIXED: Use typed navigation
+  const navigation = useMainTabNavigation();
+
+  // State management
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    monthlyBudget: 10000,
-    currency: '₹',
-  });
+  const [showAddExpense, setShowAddExpense] = useState(false);
   
   // Loading states
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  
-  const [showAddExpense, setShowAddExpense] = useState(false);
-  
-  // Form validation
+
+  // ✅ FIXED: Use proper validation hook
   const {
     formData,
     updateField,
@@ -161,70 +79,86 @@ export default function CalendarScreen() {
     getFieldError,
     hasFieldError,
     resetValidation,
-  } = useFormValidation(null, {
+  } = useFormValidation(createExpenseValidator(), {
     amount: '',
     description: '',
     category: 'food',
   });
 
+  // Effects
   useEffect(() => {
-    loadData();
+    loadExpenses();
   }, []);
 
-  const loadData = async () => {
+  // ✅ IMPROVED: Better data loading with error handling
+  const loadExpenses = async (silent = false) => {
     try {
+      if (!silent) setIsInitialLoading(true);
       setLoadingError(null);
-      
-      // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const [expensesData, settingsData] = await Promise.all([
-        AsyncStorage.getItem('expenses'),
-        AsyncStorage.getItem('userSettings'),
-      ]);
 
+      const expensesData = await AsyncStorage.getItem('expenses');
       if (expensesData) {
         setExpenses(JSON.parse(expensesData));
       }
-
-      if (settingsData) {
-        setUserSettings(JSON.parse(settingsData));
-      }
     } catch (error) {
-      console.error('Error loading data:', error);
-      setLoadingError('Failed to load calendar data. Please try again.');
+      console.error('Error loading expenses:', error);
+      setLoadingError('Failed to load calendar data');
     } finally {
       setIsInitialLoading(false);
+      setIsRefreshing(false);
     }
   };
 
-  const saveExpenses = async (newExpenses: Expense[]) => {
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadExpenses(true);
+  };
+
+  // ✅ IMPROVED: Better expense saving with error handling
+  const saveExpenses = async (updatedExpenses: Expense[]) => {
     try {
-      setIsSaving(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await AsyncStorage.setItem('expenses', JSON.stringify(newExpenses));
-      setExpenses(newExpenses);
+      await AsyncStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+      setExpenses(updatedExpenses);
     } catch (error) {
       console.error('Error saving expenses:', error);
       Alert.alert('Error', 'Failed to save expense. Please try again.');
       throw error;
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const onRefresh = React.useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await loadData();
-    } catch (error) {
-      console.error('Refresh error:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, []);
+  // Utility functions
+  const formatDate = (year: number, month: number, day: number): string => {
+    const date = new Date(year, month, day);
+    return date.toISOString().split('T')[0];
+  };
 
-  const getDaysInMonth = (date: Date) => {
+  const getExpensesForDate = (dateString: string): Expense[] => {
+    return expenses.filter(expense => expense.date === dateString);
+  };
+
+  const getTotalForDate = (dateString: string): number => {
+    return getExpensesForDate(dateString)
+      .filter(expense => expense.type === 'expense')
+      .reduce((sum, expense) => sum + expense.amount, 0);
+  };
+
+  const getMonthTotal = (): number => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const monthStart = new Date(year, month, 1).toISOString().split('T')[0];
+    const monthEnd = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    return expenses
+      .filter(expense => 
+        expense.date >= monthStart && 
+        expense.date <= monthEnd && 
+        expense.type === 'expense'
+      )
+      .reduce((sum, expense) => sum + expense.amount, 0);
+  };
+
+  // Calendar logic
+  const getDaysInMonth = (date: Date): (number | null)[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -232,81 +166,33 @@ export default function CalendarScreen() {
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
 
-    const days = [];
-    
+    const days: (number | null)[] = [];
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    
+
     // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
-    
+
     return days;
   };
 
-  const formatDate = (year: number, month: number, day: number) => {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  };
-
-  const getExpensesForDate = (dateString: string) => {
-    return expenses.filter(expense => expense.date === dateString);
-  };
-
-  const getMonthlyTotal = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const monthExpenses = expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
-      return expenseDate.getFullYear() === year && 
-             expenseDate.getMonth() === month &&
-             expense.type === 'expense';
-    });
-    
-    return monthExpenses.reduce((total, expense) => total + expense.amount, 0);
-  };
-
-  const getCategoryTotals = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const monthExpenses = expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
-      return expenseDate.getFullYear() === year && 
-             expenseDate.getMonth() === month && 
-             expense.type === 'expense';
-    });
-
-    const categoryTotals = new Map();
-    const categoryExpenses = new Map();
-
-    monthExpenses.forEach(expense => {
-      const current = categoryTotals.get(expense.category) || 0;
-      categoryTotals.set(expense.category, current + expense.amount);
-      
-      if (!categoryExpenses.has(expense.category)) {
-        categoryExpenses.set(expense.category, []);
-      }
-      categoryExpenses.get(expense.category).push(expense);
-    });
-
-    return Array.from(categoryTotals.entries()).map(([category, total]) => ({
-      category,
-      total,
-      expenses: categoryExpenses.get(category) || []
-    })).sort((a, b) => b.total - a.total);
-  };
-
+  // Event handlers
   const handleDatePress = (day: number) => {
-    setSelectedDate(selectedDate === day ? null : day);
+    setSelectedDate(day);
+    setShowAddExpense(true);
   };
 
   const handleAddExpense = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors and try again.');
       return;
     }
+
+    setIsSaving(true);
 
     try {
       const newExpense: Expense = {
@@ -316,7 +202,7 @@ export default function CalendarScreen() {
           : new Date().toISOString().split('T')[0],
         amount: parseFloat(formData.amount),
         category: formData.category,
-        description: formData.description,
+        description: formData.description.trim(),
         type: 'expense',
       };
 
@@ -330,6 +216,8 @@ export default function CalendarScreen() {
       Alert.alert('Success!', 'Expense added successfully');
     } catch (error) {
       // Error already handled in saveExpenses
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -344,6 +232,7 @@ export default function CalendarScreen() {
     setSelectedDate(null);
   };
 
+  // ✅ IMPROVED: Better calendar day rendering with proper logic
   const renderDay = (day: number | null, index: number) => {
     if (day === null) {
       return <View key={index} style={styles.emptyDay} />;
@@ -379,7 +268,7 @@ export default function CalendarScreen() {
     );
   };
 
-  // Show loading state on initial load
+  // ✅ IMPROVED: Proper loading and error states
   if (isInitialLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -388,68 +277,54 @@ export default function CalendarScreen() {
     );
   }
 
-  // Show error state if loading failed
   if (loadingError) {
     return (
       <SafeAreaView style={styles.container}>
         <ErrorState
           title="Failed to load calendar"
           description={loadingError}
-          onRetry={() => {
-            setLoadingError(null);
-            setIsInitialLoading(true);
-            loadData();
-          }}
+          onRetry={() => loadExpenses()}
         />
       </SafeAreaView>
     );
   }
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const days = getDaysInMonth(currentDate);
-  const monthlyTotal = getMonthlyTotal();
-  const categoryTotals = getCategoryTotals();
+  const monthTotal = getMonthTotal();
 
   return (
     <SafeAreaView style={styles.container}>
-      <LoadingOverlay visible={isSaving} text="Saving expense..." />
-      
       <ScrollView 
-        style={styles.scrollView} 
-        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
         refreshControl={
           <RefreshControl 
             refreshing={isRefreshing} 
-            onRefresh={onRefresh}
-            tintColor="#2E7D61"
+            onRefresh={handleRefresh}
             colors={['#2E7D61']}
           />
         }
       >
         {/* Calendar Card */}
         <View style={styles.calendarCard}>
-          {/* Month Navigation */}
+          {/* Month Header */}
           <View style={styles.monthHeader}>
             <TouchableOpacity onPress={() => navigateMonth('prev')}>
               <Text style={styles.navArrow}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.monthTitle}>
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Text>
             <TouchableOpacity onPress={() => navigateMonth('next')}>
               <Text style={styles.navArrow}>›</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Week Days Header */}
+          {/* Week Header */}
           <View style={styles.weekHeader}>
-            {weekDays.map(day => (
-              <Text key={day} style={styles.weekDay}>{day}</Text>
+            {WEEK_DAYS.map((day) => (
+              <Text key={day} style={styles.weekDay}>
+                {day}
+              </Text>
             ))}
           </View>
 
@@ -459,50 +334,38 @@ export default function CalendarScreen() {
           </View>
         </View>
 
-        {/* Total Spent Card */}
+        {/* Monthly Total Card */}
         <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>Total Spent</Text>
-          <Text style={styles.totalAmount}>{userSettings.currency}{monthlyTotal.toLocaleString()}</Text>
+          <Text style={styles.totalTitle}>
+            {MONTH_NAMES[currentDate.getMonth()]} Expenses
+          </Text>
+          <Text style={styles.totalAmount}>₹{monthTotal.toLocaleString()}</Text>
+          <Text style={styles.totalSubtext}>
+            Total spent this month
+          </Text>
         </View>
 
-        {/* Category Breakdown */}
-        {categoryTotals.map(({ category, total, expenses: categoryExpenses }) => {
-          const categoryInfo = EXPENSE_CATEGORIES.find(cat => cat.key === category) || EXPENSE_CATEGORIES[6];
-          
-          return (
-            <View key={category} style={styles.categorySection}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.categoryInfo}>
-                  <Text style={styles.categoryIcon}>{categoryInfo.icon}</Text>
-                  <Text style={styles.categoryName}>{categoryInfo.label}</Text>
-                </View>
-                <View style={styles.categoryAmount}>
-                  <Text style={styles.categoryTotal}>{userSettings.currency}{total.toLocaleString()}</Text>
-                  <Text style={styles.categoryArrow}>▲</Text>
-                </View>
-              </View>
-              
-              {/* Sub-expenses */}
-              {categoryExpenses.map((expense) => (
-                <View key={expense.id} style={styles.subExpense}>
-                  <Text style={styles.subExpenseDescription}>{expense.description}</Text>
-                  <Text style={styles.subExpenseAmount}>{userSettings.currency}{expense.amount}</Text>
-                </View>
-              ))}
+        {/* Quick Stats */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Quick Stats</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {expenses.filter(e => 
+                  e.date.startsWith(currentDate.getFullYear() + '-' + 
+                  String(currentDate.getMonth() + 1).padStart(2, '0'))
+                ).length}
+              </Text>
+              <Text style={styles.statLabel}>Transactions</Text>
             </View>
-          );
-        })}
-
-        {/* Add Expense Button */}
-        <TouchableOpacity 
-          style={styles.addExpenseButton}
-          onPress={() => {
-            resetValidation();
-            setShowAddExpense(true);
-          }}
-        >
-          <Text style={styles.addExpenseText}>+ Add Expense</Text>
-        </TouchableOpacity>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                ₹{monthTotal > 0 ? Math.round(monthTotal / new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()).toLocaleString() : 0}
+              </Text>
+              <Text style={styles.statLabel}>Daily Average</Text>
+            </View>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Add Expense Modal */}
@@ -513,7 +376,11 @@ export default function CalendarScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowAddExpense(false)}>
+            <TouchableOpacity onPress={() => {
+              setShowAddExpense(false);
+              resetValidation();
+              setSelectedDate(null);
+            }}>
               <Text style={styles.modalCancel}>Cancel</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Add Expense</Text>
@@ -527,31 +394,26 @@ export default function CalendarScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
+            {/* Amount Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Amount ({userSettings.currency}) *</Text>
+              <Text style={styles.inputLabel}>Amount *</Text>
               <TextInput
-                style={[
-                  styles.input,
-                  hasFieldError('amount') && styles.inputError
-                ]}
-                placeholder="Enter amount"
+                style={[styles.input, hasFieldError('amount') && styles.inputError]}
+                placeholder="0.00"
                 keyboardType="numeric"
                 value={formData.amount}
                 onChangeText={(value) => updateField('amount', value)}
-                autoFocus
               />
               {hasFieldError('amount') && (
                 <Text style={styles.errorText}>{getFieldError('amount')}</Text>
               )}
             </View>
 
+            {/* Description Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Description *</Text>
               <TextInput
-                style={[
-                  styles.input,
-                  hasFieldError('description') && styles.inputError
-                ]}
+                style={[styles.input, hasFieldError('description') && styles.inputError]}
                 placeholder="What did you spend on?"
                 value={formData.description}
                 onChangeText={(value) => updateField('description', value)}
@@ -565,6 +427,7 @@ export default function CalendarScreen() {
               </Text>
             </View>
 
+            {/* Category Selection */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Category *</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -594,99 +457,24 @@ export default function CalendarScreen() {
               )}
             </View>
 
+            {/* Date Info */}
             {selectedDate && (
               <View style={styles.dateInfo}>
                 <Text style={styles.dateLabel}>
-                  Adding expense for: {monthNames[currentDate.getMonth()]} {selectedDate}, {currentDate.getFullYear()}
+                  Adding expense for: {MONTH_NAMES[currentDate.getMonth()]} {selectedDate}, {currentDate.getFullYear()}
                 </Text>
               </View>
             )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Loading Overlay */}
+      <LoadingOverlay visible={isSaving} text="Saving expense..." />
     </SafeAreaView>
   );
 }
 
-// Temporary styles
-const tempStyles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  errorState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorDescription: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  errorButton: {
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  errorButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  overlayContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-  },
-  overlayText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '600',
-  },
-  buttonText: {
-    color: '#2E7D61',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
-
-// Main styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -782,7 +570,7 @@ const styles = StyleSheet.create({
   totalCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
+    padding: 24,
     marginBottom: 16,
     alignItems: 'center',
     shadowColor: '#000',
@@ -790,91 +578,54 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  totalLabel: {
+  totalTitle: {
     fontSize: 16,
-    color: '#999',
+    color: '#666',
     marginBottom: 8,
   },
   totalAmount: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D61',
+    color: '#FF6B6B',
+    marginBottom: 4,
   },
-  categorySection: {
+  totalSubtext: {
+    fontSize: 14,
+    color: '#999',
+  },
+  statsCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
+    padding: 24,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categoryInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  categoryName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  categoryAmount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryTotal: {
+  statsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1A1A1A',
-    marginRight: 8,
+    marginBottom: 16,
   },
-  categoryArrow: {
-    fontSize: 12,
-    color: '#1A1A1A',
-  },
-  subExpense: {
+  statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+  },
+  statItem: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingLeft: 36,
-    borderLeftWidth: 3,
-    borderLeftColor: '#2E7D61',
-    marginBottom: 8,
   },
-  subExpenseDescription: {
-    fontSize: 16,
-    color: '#555',
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2E7D61',
+    marginBottom: 4,
   },
-  subExpenseAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
   },
-  addExpenseButton: {
-    backgroundColor: '#2E7D61',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  addExpenseText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Modal Styles
   modalContainer: {
     flex: 1,
     backgroundColor: '#F8F9FA',

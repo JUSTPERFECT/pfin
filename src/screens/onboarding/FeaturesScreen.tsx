@@ -1,6 +1,9 @@
+// src/screens/onboarding/FeaturesScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+
+// ✅ FIXED: Use proper navigation types
+import { useOnboardingNavigation } from '../../types/navigation';
 
 const features = [
   {
@@ -21,7 +24,7 @@ const features = [
 ];
 
 export default function FeaturesScreen() {
-  const navigation = useNavigation();
+  const navigation = useOnboardingNavigation();
 
   const handleNext = () => {
     navigation.navigate('SetupBudget');
@@ -31,7 +34,8 @@ export default function FeaturesScreen() {
     navigation.navigate('Done');
   };
 
-  const renderItem = ({ item }) => (
+  // ✅ FIXED: Add proper TypeScript typing for renderItem
+  const renderItem = ({ item }: { item: typeof features[0] }) => (
     <View style={styles.card}>
       <Text style={styles.icon}>{item.icon}</Text>
       <Text style={styles.title}>{item.title}</Text>

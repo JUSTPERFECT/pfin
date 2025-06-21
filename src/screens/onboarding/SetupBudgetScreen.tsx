@@ -1,3 +1,4 @@
+// src/screens/onboarding/SetupBudgetScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -8,17 +9,16 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ✅ FIXED: Use proper navigation types and validation
+import { useOnboardingNavigation } from '../../types/navigation';
+import { useFormValidation, createBudgetValidator } from '../../utils/validation';
 import { useAppState } from '../../context/AppStateProvider';
 
 export default function SetupBudgetScreen() {
-  const [budget, setBudget] = useState('');
-  const [currency, setCurrency] = useState('₹');
-  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const navigation = useNavigation();
+  const navigation = useOnboardingNavigation();
   const { setHasOnboarded } = useAppState();
 
   const currencies = [
@@ -28,11 +28,20 @@ export default function SetupBudgetScreen() {
     { code: '£', name: 'British Pound' },
   ];
 
+  // ✅ FIXED: Use proper validation
+  const {
+    formData,
+    updateField,
+    validateForm,
+    getFieldError,
+    hasFieldError,
+  } = useFormValidation(createBudgetValidator(), {
+    monthlyBudget: '',
+    currency: '₹',
+  });
+
   const handleSave = async () => {
-    // Quick validation
-    const budgetValue = parseFloat(budget);
-    if (!budget || isNaN(budgetValue) || budgetValue <= 0) {
-      setError('Please enter a valid budget amount');
+    if (!validateForm()) {
       return;
     }
 
@@ -41,11 +50,11 @@ export default function SetupBudgetScreen() {
     try {
       // Save settings
       await AsyncStorage.setItem('userSettings', JSON.stringify({
-        monthlyBudget: budgetValue,
-        currency,
+        monthlyBudget: parseFloat(formData.monthlyBudget),
+        currency: formData.currency,
       }));
       
-      // Navigate immediately - no delay
+      // Navigate to completion
       navigation.navigate('Done');
       
     } catch (err) {
@@ -60,52 +69,62 @@ export default function SetupBudgetScreen() {
       <ScrollView style={styles.content}>
         <Text style={styles.title}>Set your monthly budget</Text>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Monthly Budget</Text>
-          <TextInput
-            style={[styles.input, error && styles.inputError]}
-            placeholder="Enter amount"
-            keyboardType="numeric"
-            value={budget}
-            onChangeText={(text) => {
-              setBudget(text);
-              if (error) setError(''); // Clear error on input
-            }}
-            autoFocus
-          />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        </View>
-
+        {/* Currency Selection */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Currency</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.currencySelector}>
             {currencies.map((curr) => (
               <TouchableOpacity
                 key={curr.code}
                 style={[
-                  styles.currencyButton,
-                  currency === curr.code && styles.selectedCurrency
+                  styles.currencyOption,
+                  formData.currency === curr.code && styles.selectedCurrency
                 ]}
-                onPress={() => setCurrency(curr.code)}
+                onPress={() => updateField('currency', curr.code)}
               >
                 <Text style={[
-                  styles.currencyText,
-                  currency === curr.code && styles.selectedText
+                  styles.currencyCode,
+                  formData.currency === curr.code && styles.selectedCurrencyText
                 ]}>
                   {curr.code}
                 </Text>
+                <Text style={[
+                  styles.currencyName,
+                  formData.currency === curr.code && styles.selectedCurrencyText
+                ]}>
+                  {curr.name}
+                </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
+          {hasFieldError('currency') && (
+            <Text style={styles.errorText}>{getFieldError('currency')}</Text>
+          )}
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, (!budget || saving) && styles.buttonDisabled]}
+        {/* Budget Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Monthly Budget</Text>
+          <TextInput
+            style={[styles.input, hasFieldError('monthlyBudget') && styles.inputError]}
+            placeholder="Enter amount"
+            keyboardType="numeric"
+            value={formData.monthlyBudget}
+            onChangeText={(text) => updateField('monthlyBudget', text)}
+            autoFocus
+          />
+          {hasFieldError('monthlyBudget') && (
+            <Text style={styles.errorText}>{getFieldError('monthlyBudget')}</Text>
+          )}
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.button, saving && styles.buttonDisabled]} 
           onPress={handleSave}
-          disabled={!budget || saving}
+          disabled={saving}
         >
           <Text style={styles.buttonText}>
-            {saving ? 'Saving...' : 'Continue'}
+            {saving ? 'Saving...' : 'Complete Setup'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -119,75 +138,88 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3FFF7',
   },
   content: {
+    flex: 1,
     padding: 24,
+    paddingTop: 60,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#2E7D61',
     textAlign: 'center',
-    marginTop: 60,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   inputGroup: {
     marginBottom: 24,
   },
   label: {
     fontSize: 16,
-    marginBottom: 8,
-    color: '#333',
     fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#fff',
+  currencySelector: {
+    gap: 8,
+  },
+  currencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  inputError: {
-    borderColor: '#E74C3C',
-  },
-  errorText: {
-    color: '#E74C3C',
-    fontSize: 14,
-    marginTop: 6,
-  },
-  currencyButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
   },
   selectedCurrency: {
-    backgroundColor: '#2E7D61',
     borderColor: '#2E7D61',
+    backgroundColor: '#F0FFF4',
   },
-  currencyText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  selectedText: {
-    color: '#fff',
+  currencyCode: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginRight: 12,
+    minWidth: 24,
+  },
+  currencyName: {
+    fontSize: 16,
+    color: '#666',
+  },
+  selectedCurrencyText: {
+    color: '#2E7D61',
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  inputError: {
+    borderColor: '#FF6B6B',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    marginTop: 4,
   },
   button: {
     backgroundColor: '#2E7D61',
     paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: 12,
     marginTop: 32,
-    alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#999',
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
