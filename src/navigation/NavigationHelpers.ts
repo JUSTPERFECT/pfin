@@ -41,6 +41,11 @@ export const NavigationHelpers = {
     navigate('AddTransaction', { editId: transactionId });
   },
   
+  // Navigate to User Setup screen
+  userSetup: () => {
+    navigate('UserSetup');
+  },
+  
   // Navigate to Transaction Detail screen
   viewTransaction: (transactionId: string) => {
     console.log('Navigate to transaction detail:', transactionId);

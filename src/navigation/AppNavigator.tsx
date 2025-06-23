@@ -6,7 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { HomeScreen, AddTransactionScreen, CalendarScreen } from '../screens';
+import { HomeScreen, AddTransactionScreen, CalendarScreen, UserSetupScreen } from '../screens';
 import type { RootStackParamList, MainTabParamList } from '../types';
 import { NavigationHelpers } from './NavigationHelpers';
 
@@ -218,6 +218,19 @@ export function AppNavigator() {
           },
           headerLeft: () => null,
         })}
+      />
+      
+      <Stack.Screen 
+        name="UserSetup" 
+        component={UserSetupScreen}
+        options={{
+          title: 'Setup Profile',
+          presentation: 'modal',
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerLeft: () => null,
+        }}
       />
     </Stack.Navigator>
   );

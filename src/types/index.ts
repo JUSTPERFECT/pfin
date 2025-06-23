@@ -80,6 +80,7 @@ export interface Transaction {
       editId?: string;
       initialType?: TransactionType;
     };
+    UserSetup: undefined;
     TransactionDetail: { 
       transactionId: string;
     };

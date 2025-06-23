@@ -138,6 +138,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     </View>
   );
 
+  const renderUserSetupPrompt = () => {
+    if (user) return null;
+    
+    return (
+      <Card style={styles.setupCard}>
+        <Text style={[styles.setupTitle, { color: theme.colors.text }]}>
+          Welcome to PFin! 🎉
+        </Text>
+        <Text style={[styles.setupSubtitle, { color: theme.colors.textSecondary }]}>
+          Let's set up your profile to get started with managing your finances
+        </Text>
+        <Button 
+          variant="primary" 
+          onPress={() => NavigationHelpers.userSetup()}
+          style={styles.setupButton}
+        >
+          Complete Setup
+        </Button>
+      </Card>
+    );
+  };
+
   const renderMonthSummary = () => (
     <Card style={styles.summaryCard}>
       <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
@@ -354,6 +376,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {renderHeader()}
+        {renderUserSetupPrompt()}
         {renderMonthSummary()}
         {renderBudgetOverview()}
         {renderQuickActions()}
@@ -528,6 +551,23 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   emptyStateButton: {
+    marginTop: theme.spacing.sm,
+  },
+  
+  // Setup card
+  setupCard: {
+    marginBottom: theme.spacing.md,
+  },
+  setupTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: '700',
+    marginBottom: theme.spacing.xs,
+  },
+  setupSubtitle: {
+    fontSize: theme.fontSize.sm,
+    marginBottom: theme.spacing.md,
+  },
+  setupButton: {
     marginTop: theme.spacing.sm,
   },
 });
