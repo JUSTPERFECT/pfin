@@ -4,23 +4,25 @@
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZE, FONT_WEIGHT } from '../constants';
 
 // ==========================================
-// THEME DEFINITION
+// 🌿 MINT THEME DEFINITION
 // ==========================================
 
 export const lightTheme = {
   colors: {
-    // Primary colors
-    primary: COLORS.primary,
-    primaryDark: COLORS.primaryDark,
-    primaryLight: COLORS.primaryLight,
-    
-    // Secondary colors
-    secondary: COLORS.secondary,
-    secondaryDark: COLORS.secondaryDark,
-    secondaryLight: COLORS.secondaryLight,
+    // 🌿 Mint Theme Colors
+    background: COLORS.background,
+    surface: COLORS.surface,
+    mint: COLORS.mint,
+    softMint: COLORS.softMint,
+    accent: COLORS.accent,
+    dark: COLORS.dark,
+    text: COLORS.text,
+    gray: COLORS.gray,
+    border: COLORS.border,
+    error: COLORS.error,
+    success: COLORS.success,
     
     // Status colors
-    success: COLORS.success,
     successDark: COLORS.successDark,
     successLight: COLORS.successLight,
     
@@ -28,21 +30,14 @@ export const lightTheme = {
     warningDark: COLORS.warningDark,
     warningLight: COLORS.warningLight,
     
-    error: COLORS.error,
     errorDark: COLORS.errorDark,
     errorLight: COLORS.errorLight,
     
-    // Background colors
-    background: COLORS.background,
-    surface: COLORS.surface,
-    
     // Text colors
-    text: COLORS.text,
-    textSecondary: COLORS.textSecondary,
+    textSecondary: COLORS.gray, // Maps to gray
     
     // Border colors
-    border: COLORS.border,
-    separator: COLORS.separator,
+    separator: COLORS.border,
     
     // Input colors
     placeholder: COLORS.placeholder,
@@ -67,6 +62,7 @@ export const lightTheme = {
   borderRadius: {
     sm: BORDER_RADIUS.sm,
     md: BORDER_RADIUS.md,
+    input: BORDER_RADIUS.input,
     lg: BORDER_RADIUS.lg,
     xl: BORDER_RADIUS.xl,
     round: BORDER_RADIUS.round,
@@ -83,31 +79,71 @@ export const lightTheme = {
   },
   
   fontWeight: {
+    light: FONT_WEIGHT.light,
     normal: FONT_WEIGHT.normal,
     medium: FONT_WEIGHT.medium,
     semibold: FONT_WEIGHT.semibold,
     bold: FONT_WEIGHT.bold,
   },
   
-  // Shadow styles for elevation
+  // 🌫️ Shadow styles for elevation (mint theme)
   shadows: {
-    small: {
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
-    },
-    medium: {
+    card: {
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
       elevation: 4,
     },
-    large: {
+    fab: {
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
       elevation: 8,
+    },
+    modal: {
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 16,
+    },
+  },
+  
+  // ⚡ Z-Indices (mint theme)
+  zIndex: {
+    base: 0,
+    dropdown: 10,
+    header: 50,
+    overlay: 100,
+    modal: 200,
+    toast: 300,
+  },
+  
+  // 🔤 Typography styles (mint theme)
+  typography: {
+    h1: {
+      fontSize: FONT_SIZE.xxxl, // 36px
+      fontWeight: FONT_WEIGHT.bold,
+      lineHeight: 44,
+    },
+    h2: {
+      fontSize: FONT_SIZE.xxl, // 28px
+      fontWeight: FONT_WEIGHT.bold,
+      lineHeight: 36,
+    },
+    h3: {
+      fontSize: FONT_SIZE.xl, // 20px
+      fontWeight: FONT_WEIGHT.semibold,
+      lineHeight: 28,
+    },
+    body: {
+      fontSize: FONT_SIZE.md, // 16px
+      fontWeight: FONT_WEIGHT.normal,
+      lineHeight: 24,
+    },
+    caption: {
+      fontSize: FONT_SIZE.sm, // 14px
+      fontWeight: FONT_WEIGHT.light,
+      lineHeight: 20,
     },
   },
 } as const;
@@ -147,6 +183,7 @@ export const componentStyles = {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       flexDirection: 'row' as const,
+      minHeight: 44, // Minimum tap area
     },
     
     sizes: {
@@ -169,15 +206,18 @@ export const componentStyles = {
     
     variants: {
       primary: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.mint,
       },
       secondary: {
-        backgroundColor: theme.colors.secondary,
+        backgroundColor: theme.colors.softMint,
+      },
+      accent: {
+        backgroundColor: theme.colors.accent,
       },
       outline: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: theme.colors.primary,
+        borderColor: theme.colors.mint,
       },
       ghost: {
         backgroundColor: 'transparent',
@@ -190,42 +230,21 @@ export const componentStyles = {
     base: {
       borderWidth: 1,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.md,
+      borderRadius: theme.borderRadius.input,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       fontSize: theme.fontSize.md,
       color: theme.colors.text,
       backgroundColor: theme.colors.surface,
+      minHeight: 44, // Minimum tap area
     },
     
-    focused: {
-      borderColor: theme.colors.primary,
-      borderWidth: 2,
+    focus: {
+      borderColor: theme.colors.mint,
     },
     
     error: {
       borderColor: theme.colors.error,
-    },
-    
-    sizes: {
-      small: {
-        paddingHorizontal: theme.spacing.sm,
-        paddingVertical: theme.spacing.xs,
-        fontSize: theme.fontSize.sm,
-        minHeight: 32,
-      },
-      medium: {
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.sm,
-        fontSize: theme.fontSize.md,
-        minHeight: 44,
-      },
-      large: {
-        paddingHorizontal: theme.spacing.lg,
-        paddingVertical: theme.spacing.md,
-        fontSize: theme.fontSize.lg,
-        minHeight: 52,
-      },
     },
   },
   
@@ -235,65 +254,21 @@ export const componentStyles = {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
       padding: theme.spacing.md,
-      ...theme.shadows.small,
+      ...theme.shadows.card,
     },
     
-    variants: {
-      elevated: {
-        ...theme.shadows.medium,
-      },
-      outlined: {
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        shadowOpacity: 0,
-        elevation: 0,
-      },
+    elevated: {
+      ...theme.shadows.fab,
     },
   },
   
   // Text styles
   text: {
-    heading1: {
-      fontSize: theme.fontSize.xxxl,
-      fontWeight: theme.fontWeight.bold,
-      color: theme.colors.text,
-      lineHeight: theme.fontSize.xxxl * 1.2,
-    },
-    
-    heading2: {
-      fontSize: theme.fontSize.xxl,
-      fontWeight: theme.fontWeight.bold,
-      color: theme.colors.text,
-      lineHeight: theme.fontSize.xxl * 1.2,
-    },
-    
-    heading3: {
-      fontSize: theme.fontSize.xl,
-      fontWeight: theme.fontWeight.semibold,
-      color: theme.colors.text,
-      lineHeight: theme.fontSize.xl * 1.2,
-    },
-    
-    body: {
-      fontSize: theme.fontSize.md,
-      fontWeight: theme.fontWeight.normal,
-      color: theme.colors.text,
-      lineHeight: theme.fontSize.md * 1.4,
-    },
-    
-    caption: {
-      fontSize: theme.fontSize.sm,
-      fontWeight: theme.fontWeight.normal,
-      color: theme.colors.textSecondary,
-      lineHeight: theme.fontSize.sm * 1.3,
-    },
-    
-    small: {
-      fontSize: theme.fontSize.xs,
-      fontWeight: theme.fontWeight.normal,
-      color: theme.colors.textSecondary,
-      lineHeight: theme.fontSize.xs * 1.3,
-    },
+    h1: theme.typography.h1,
+    h2: theme.typography.h2,
+    h3: theme.typography.h3,
+    body: theme.typography.body,
+    caption: theme.typography.caption,
   },
 } as const;
 

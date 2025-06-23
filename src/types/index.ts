@@ -92,9 +92,10 @@ export interface Transaction {
   
   export type MainTabParamList = {
     Home: undefined;
-    Transactions: undefined;
-    Budget: undefined;
-    Profile: undefined;
+    Calendar: undefined;
+    Add: undefined;
+    Analytics: undefined;
+    Settings: undefined;
   };
   
   // ==========================================

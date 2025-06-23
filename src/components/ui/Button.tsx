@@ -17,7 +17,7 @@ import { useTheme } from '../../context/ThemeContext';
 // TYPES
 // ==========================================
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
@@ -72,21 +72,31 @@ const Button: React.FC<ButtonProps> = ({
     const variants = {
       primary: {
         container: {
-          backgroundColor: backgroundColor || theme.colors.primary,
+          backgroundColor: backgroundColor || theme.colors.mint,
           borderWidth: 0,
         },
         text: {
-          color: textColor || '#FFFFFF',
+          color: textColor || theme.colors.dark,
           fontWeight: theme.fontWeight.semibold,
         },
       },
       secondary: {
         container: {
-          backgroundColor: backgroundColor || theme.colors.secondary,
+          backgroundColor: backgroundColor || theme.colors.softMint,
           borderWidth: 0,
         },
         text: {
-          color: textColor || '#FFFFFF',
+          color: textColor || theme.colors.dark,
+          fontWeight: theme.fontWeight.semibold,
+        },
+      },
+      accent: {
+        container: {
+          backgroundColor: backgroundColor || theme.colors.accent,
+          borderWidth: 0,
+        },
+        text: {
+          color: textColor || theme.colors.dark,
           fontWeight: theme.fontWeight.semibold,
         },
       },
@@ -94,10 +104,10 @@ const Button: React.FC<ButtonProps> = ({
         container: {
           backgroundColor: backgroundColor || 'transparent',
           borderWidth: 1,
-          borderColor: theme.colors.primary,
+          borderColor: theme.colors.mint,
         },
         text: {
-          color: textColor || theme.colors.primary,
+          color: textColor || theme.colors.mint,
           fontWeight: theme.fontWeight.medium,
         },
       },
@@ -107,7 +117,7 @@ const Button: React.FC<ButtonProps> = ({
           borderWidth: 0,
         },
         text: {
-          color: textColor || theme.colors.primary,
+          color: textColor || theme.colors.mint,
           fontWeight: theme.fontWeight.medium,
         },
       },
@@ -117,7 +127,7 @@ const Button: React.FC<ButtonProps> = ({
           borderWidth: 0,
         },
         text: {
-          color: textColor || '#FFFFFF',
+          color: textColor || theme.colors.surface,
           fontWeight: theme.fontWeight.semibold,
         },
       },
@@ -202,9 +212,12 @@ const Button: React.FC<ButtonProps> = ({
   
   const getLoadingColor = (): string => {
     if (variant === 'outline' || variant === 'ghost') {
-      return theme.colors.primary;
+      return theme.colors.mint;
     }
-    return '#FFFFFF';
+    if (variant === 'danger') {
+      return theme.colors.surface;
+    }
+    return theme.colors.dark;
   };
 
   // ==========================================

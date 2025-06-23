@@ -182,7 +182,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           Budget Overview
         </Text>
         <TouchableOpacity onPress={handleViewBudgets}>
-          <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+          <Text style={[styles.seeAllText, { color: theme.colors.mint }]}>
             View All
           </Text>
         </TouchableOpacity>
@@ -278,7 +278,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           Recent Transactions
         </Text>
         <TouchableOpacity onPress={handleViewAllTransactions}>
-          <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+          <Text style={[styles.seeAllText, { color: theme.colors.mint }]}>
             See All
           </Text>
         </TouchableOpacity>
@@ -337,6 +337,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // RENDER
   // ==========================================
   
+  const styles = createStyles(theme);
+  
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
@@ -346,7 +348,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={handleRefresh}
-            tintColor={theme.colors.primary}
+            tintColor={theme.colors.mint}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -365,7 +367,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 // STYLES
 // ==========================================
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -373,36 +375,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
   },
   
   // Header
   header: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: theme.fontSize.xxl,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   dateText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.sm,
     fontWeight: '500',
   },
   
   // Cards
   summaryCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   budgetCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   actionsCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   transactionsCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   
   // Card headers
@@ -410,14 +412,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: theme.fontSize.lg,
     fontWeight: '600',
   },
   seeAllText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.sm,
     fontWeight: '500',
   },
   
@@ -425,31 +427,31 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   summaryItem: {
     flex: 1,
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: theme.fontSize.sm,
+    marginBottom: theme.spacing.xs,
   },
   summaryAmount: {
-    fontSize: 20,
+    fontSize: theme.fontSize.xl,
     fontWeight: '700',
   },
   netAmountContainer: {
     borderTopWidth: 1,
-    paddingTop: 16,
+    paddingTop: theme.spacing.md,
     alignItems: 'center',
   },
   netAmountLabel: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: theme.fontSize.sm,
+    marginBottom: theme.spacing.xs,
   },
   netAmount: {
-    fontSize: 24,
+    fontSize: theme.fontSize.xxl,
     fontWeight: '700',
   },
   
@@ -457,33 +459,33 @@ const styles = StyleSheet.create({
   budgetSummary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
   },
   budgetSummaryItem: {
     alignItems: 'center',
   },
   budgetSummaryLabel: {
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: theme.fontSize.xs,
+    marginBottom: theme.spacing.xs,
   },
   budgetSummaryValue: {
-    fontSize: 16,
+    fontSize: theme.fontSize.md,
     fontWeight: '600',
   },
   warningBadge: {
-    padding: 8,
-    borderRadius: 8,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
     alignItems: 'center',
   },
   warningText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.sm,
     fontWeight: '500',
   },
   
   // Actions
   actionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: theme.spacing.sm,
   },
   actionButton: {
     flex: 1,
@@ -491,42 +493,42 @@ const styles = StyleSheet.create({
   
   // Transactions
   transactionsList: {
-    gap: 12,
+    gap: theme.spacing.sm,
   },
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
   },
   transactionLeft: {
     flex: 1,
   },
   transactionDescription: {
-    fontSize: 16,
+    fontSize: theme.fontSize.md,
     fontWeight: '500',
     marginBottom: 2,
   },
   transactionCategory: {
-    fontSize: 12,
+    fontSize: theme.fontSize.xs,
   },
   transactionAmount: {
-    fontSize: 16,
+    fontSize: theme.fontSize.md,
     fontWeight: '600',
-    marginLeft: 12,
+    marginLeft: theme.spacing.sm,
   },
   
   // Empty states
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: theme.spacing.lg,
   },
   emptyStateText: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: theme.fontSize.sm,
+    marginBottom: theme.spacing.sm,
   },
   emptyStateButton: {
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
 });
 

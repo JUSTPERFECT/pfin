@@ -30,12 +30,12 @@ function AppContent() {
         theme={{
           dark: isDarkMode,
           colors: {
-            primary: theme.colors.primary,
+            primary: theme.colors.mint,
             background: theme.colors.background,
             card: theme.colors.surface,
             text: theme.colors.text,
             border: theme.colors.border,
-            notification: theme.colors.primary,
+            notification: theme.colors.mint,
           },
         }}
       >

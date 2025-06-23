@@ -37,7 +37,7 @@ import { NavigationHelpers } from '../navigation/NavigationHelpers';
 // ==========================================
 
 interface AddTransactionScreenProps {
-  navigation: any; // Temporary - will use React Navigation's navigation prop
+  navigation?: any; // Optional - React Navigation will provide this
   route?: {
     params?: {
       editId?: string;
@@ -63,6 +63,168 @@ interface FormErrors {
 // ==========================================
 // COMPONENT
 // ==========================================
+
+const createStyles = (theme: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: theme.spacing.md,
+    paddingBottom: 100, // Space for action buttons
+  },
+  
+  // Header
+  header: {
+    marginBottom: theme.spacing.lg,
+  },
+  title: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: '700',
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: theme.fontSize.sm,
+    lineHeight: 20,
+  },
+  
+  // Cards
+  typeSelectorCard: {
+    marginBottom: theme.spacing.md,
+  },
+  inputCard: {
+    marginBottom: theme.spacing.md,
+  },
+  
+  // Section titles
+  sectionTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: '600',
+    marginBottom: theme.spacing.sm,
+  },
+  
+  // Type selector
+  typeSelector: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  typeOption: {
+    flex: 1,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  typeOptionText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: '600',
+  },
+  
+  // Inputs
+  input: {
+    marginBottom: theme.spacing.sm,
+  },
+  inputLabel: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: '500',
+    marginBottom: theme.spacing.sm,
+  },
+  
+  // Amount preview
+  amountPreview: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  
+  // Category selector
+  categorySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    minHeight: 44,
+  },
+  categorySelectorText: {
+    fontSize: theme.fontSize.md,
+    flex: 1,
+  },
+  categorySelectorArrow: {
+    fontSize: theme.fontSize.xs,
+    marginLeft: theme.spacing.sm,
+  },
+  
+  // Error text
+  errorText: {
+    fontSize: theme.fontSize.xs,
+    marginTop: theme.spacing.xs,
+    marginLeft: theme.spacing.xs,
+  },
+  
+  // Action buttons
+  actionButtons: {
+    flexDirection: 'row',
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    backgroundColor: 'transparent',
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  submitButton: {
+    flex: 2,
+  },
+  
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: '600',
+  },
+  modalClose: {
+    fontSize: theme.fontSize.md,
+    fontWeight: '500',
+  },
+  categoryList: {
+    maxHeight: 300,
+  },
+  categoryOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+  },
+  categoryOptionText: {
+    fontSize: theme.fontSize.md,
+  },
+  checkmark: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: 'bold',
+  },
+});
 
 const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ 
   navigation, 
@@ -183,7 +345,7 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           Alert.alert(
             'Success', 
             'Transaction updated successfully!',
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
+            [{ text: 'OK', onPress: () => navigation?.goBack() }]
           );
         }
       } else {
@@ -192,7 +354,7 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           Alert.alert(
             'Success', 
             SUCCESS_MESSAGES.TRANSACTION_ADDED,
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
+            [{ text: 'OK', onPress: () => navigation?.goBack() }]
           );
         }
       }
@@ -207,13 +369,15 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   };
 
   const handleCancel = () => {
-    navigation.goBack();
+    navigation?.goBack();
   };
 
   // ==========================================
   // RENDER COMPONENTS
   // ==========================================
   
+  const styles = createStyles(theme);
+
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -354,7 +518,7 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               Select Category
             </Text>
             <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
-              <Text style={[styles.modalClose, { color: theme.colors.primary }]}>
+              <Text style={[styles.modalClose, { color: theme.colors.mint }]}>
                 Done
               </Text>
             </TouchableOpacity>
@@ -375,14 +539,14 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                   styles.categoryOptionText,
                   { 
                     color: formData.category === item 
-                      ? theme.colors.primary 
+                      ? theme.colors.mint 
                       : theme.colors.text 
                   }
                 ]}>
                   {item}
                 </Text>
                 {formData.category === item && (
-                  <Text style={[styles.checkmark, { color: theme.colors.primary }]}>
+                  <Text style={[styles.checkmark, { color: theme.colors.mint }]}>
                     ✓
                   </Text>
                 )}
@@ -442,172 +606,6 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     </SafeAreaView>
   );
 };
-
-// ==========================================
-// STYLES
-// ==========================================
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100, // Space for action buttons
-  },
-  
-  // Header
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  
-  // Cards
-  typeSelectorCard: {
-    marginBottom: 16,
-  },
-  inputCard: {
-    marginBottom: 16,
-  },
-  
-  // Section titles
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  
-  // Type selector
-  typeSelector: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  typeOption: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  typeOptionText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  // Inputs
-  input: {
-    marginBottom: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  
-  // Amount preview
-  amountPreview: {
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  
-  // Category selector
-  categorySelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    minHeight: 44,
-  },
-  categorySelectorText: {
-    fontSize: 16,
-    flex: 1,
-  },
-  categorySelectorArrow: {
-    fontSize: 12,
-    marginLeft: 8,
-  },
-  
-  // Error text
-  errorText: {
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  
-  // Action buttons
-  actionButtons: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-    backgroundColor: 'transparent',
-  },
-  cancelButton: {
-    flex: 1,
-  },
-  submitButton: {
-    flex: 2,
-  },
-  
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '70%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  modalClose: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  categoryList: {
-    maxHeight: 300,
-  },
-  categoryOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  categoryOptionText: {
-    fontSize: 16,
-  },
-  checkmark: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});
 
 // ==========================================
 // EXPORT

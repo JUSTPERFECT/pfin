@@ -67,12 +67,12 @@ const Card: React.FC<CardProps> = ({
       default: {
         backgroundColor: backgroundColor || theme.colors.surface,
         borderRadius: theme.borderRadius.lg,
-        ...theme.shadows.small,
+        ...theme.shadows.card,
       },
       elevated: {
         backgroundColor: backgroundColor || theme.colors.surface,
         borderRadius: theme.borderRadius.lg,
-        ...theme.shadows.medium,
+        ...theme.shadows.fab,
       },
       outlined: {
         backgroundColor: backgroundColor || theme.colors.surface,

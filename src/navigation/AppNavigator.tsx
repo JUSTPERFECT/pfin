@@ -4,10 +4,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { HomeScreen, AddTransactionScreen } from '../screens';
+import { HomeScreen, AddTransactionScreen, CalendarScreen } from '../screens';
 import type { RootStackParamList, MainTabParamList } from '../types';
+import { NavigationHelpers } from './NavigationHelpers';
 
 // ==========================================
 // NAVIGATOR INSTANCES
@@ -72,6 +73,9 @@ const TabIcon: React.FC<TabIconProps> = ({ name, color, size }) => {
 // TAB NAVIGATOR
 // ==========================================
 
+// A component that renders nothing, used for the "Add" tab button.
+const NullScreen = () => null;
+
 function MainTabNavigator() {
   const { theme } = useTheme();
 
@@ -79,19 +83,23 @@ function MainTabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarActiveTintColor: theme.colors.mint,
+        tabBarInactiveTintColor: theme.colors.gray,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: 25,
+          left: 20,
+          right: 20,
           backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          borderRadius: theme.borderRadius.lg,
+          height: 70,
+          ...theme.shadows.fab,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
-          marginTop: 4,
+          marginTop: -5,
+          marginBottom: 10,
         },
       }}
     >
@@ -101,40 +109,65 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="🏠" color={color} size={size} />
+            <Text style={{ fontSize: size, color }}>🏠</Text>
           ),
         }}
       />
-      
       <Tab.Screen 
-        name="Transactions" 
-        component={PlaceholderScreen}
+        name="Calendar" 
+        component={CalendarScreen}
         options={{
-          tabBarLabel: 'Transactions',
+          tabBarLabel: 'Calendar',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="📊" color={color} size={size} />
+            <Text style={{ fontSize: size, color }}>📅</Text>
           ),
         }}
       />
-      
       <Tab.Screen 
-        name="Budget" 
-        component={PlaceholderScreen}
+        name="Add"
+        component={NullScreen}
         options={{
-          tabBarLabel: 'Budget',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="💰" color={color} size={size} />
+          tabBarButton: () => (
+            <TouchableOpacity
+              onPress={() => NavigationHelpers.addTransaction()}
+              style={{
+                top: -25,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{
+                width: 70,
+                height: 70,
+                borderRadius: 35,
+                backgroundColor: theme.colors.mint,
+                justifyContent: 'center',
+                alignItems: 'center',
+                ...theme.shadows.fab,
+              }}>
+                <Text style={{ color: theme.colors.dark, fontSize: 35 }}>+</Text>
+              </View>
+            </TouchableOpacity>
           ),
         }}
       />
-      
       <Tab.Screen 
-        name="Profile" 
+        name="Analytics" 
         component={PlaceholderScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Analytics',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="👤" color={color} size={size} />
+            <Text style={{ fontSize: size, color }}>📊</Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={PlaceholderScreen}
+        options={{
+          tabBarLabel: 'Settings',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>⚙️</Text>
           ),
         }}
       />

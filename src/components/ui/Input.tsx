@@ -197,9 +197,10 @@ const Input = forwardRef<TextInput, InputProps>(({
       borderColor: hasError 
         ? theme.colors.error 
         : isFocused 
-          ? theme.colors.primary 
+          ? theme.colors.mint 
           : theme.colors.border,
       borderWidth: isFocused ? 2 : 1,
+      borderRadius: theme.borderRadius.input,
       backgroundColor: disabled ? theme.colors.background : theme.colors.surface,
     },
     disabled && styles.disabled,
@@ -229,6 +230,11 @@ const Input = forwardRef<TextInput, InputProps>(({
     required && styles.requiredLabel,
     labelStyle,
   ].filter(Boolean) as TextStyle;
+
+  // Required asterisk styles
+  const asteriskStyle: TextStyle = {
+    color: theme.colors.error,
+  };
 
   // ==========================================
   // HANDLERS
@@ -271,7 +277,7 @@ const Input = forwardRef<TextInput, InputProps>(({
     return (
       <Text style={labelTextStyle}>
         {label}
-        {required && <Text style={styles.asterisk}> *</Text>}
+        {required && <Text style={asteriskStyle}> *</Text>}
       </Text>
     );
   };
@@ -375,7 +381,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
     borderWidth: 1,
   },
   textInput: {
@@ -397,9 +402,6 @@ const styles = StyleSheet.create({
   },
   requiredLabel: {
     // Additional styles for required labels if needed
-  },
-  asterisk: {
-    color: '#FF3B30', // Error color
   },
   errorText: {
     fontSize: 12,

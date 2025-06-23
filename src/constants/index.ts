@@ -115,69 +115,60 @@ export const EXPENSE_CATEGORIES = [
   export type CurrencyCode = typeof CURRENCIES[number]['code'];
   
   // ==========================================
-  // COLORS
+  // 🌿 MINT THEME COLORS
   // ==========================================
   
   export const COLORS = {
-    // Primary colors
-    primary: '#007AFF',      // iOS blue
-    primaryDark: '#0056CC',
-    primaryLight: '#4DA2FF',
+    // 🌿 Mint Theme Colors
+    background: '#F3FFF7',    // Ultra-light mint — Main app background
+    surface: '#FFFFFF',       // Cards, Modals — Container background
+    mint: '#A0DABB',         // Buttons, CTA — Primary call to action
+    softMint: '#CFFAE2',     // Fills, Secondary — Subtle fill areas
+    accent: '#FFF3B0',       // Highlights, Alerts — Highlighted elements
+    dark: '#2E7D61',         // Text, Strong CTA — Strong text and icons
+    text: '#1A1A1A',         // Headings, Main Text — Main text color
+    gray: '#888888',         // Secondary Text — Placeholder or hint text
+    border: '#E0E0E0',       // Input Borders, Dividers — Subtle outlines
+    error: '#FF5A5F',        // Error State — Alerts, errors
+    success: '#2ECC71',      // Success State — Confirmations
     
-    // Secondary colors
-    secondary: '#5856D6',    // iOS purple
-    secondaryDark: '#4339A3',
-    secondaryLight: '#7B79E8',
+    // Status colors (using mint theme)
+    successDark: '#25A55A',
+    successLight: '#4CD964',
     
-    // Status colors
-    success: '#34C759',      // iOS green
-    successDark: '#28A745',
-    successLight: '#5DD87A',
+    warning: '#FFF3B0',      // Maps to accent
+    warningDark: '#E6D99C',
+    warningLight: '#FFF8D1',
     
-    warning: '#FF9500',      // iOS orange
-    warningDark: '#E6850E',
-    warningLight: '#FFB340',
+    errorDark: '#E64A4F',
+    errorLight: '#FF7A7F',
     
-    error: '#FF3B30',        // iOS red
-    errorDark: '#E62E24',
-    errorLight: '#FF6B62',
+    // Dark theme colors (for future implementation)
+    backgroundDark: '#1A1A1A',
+    surfaceDark: '#2A2A2A',
     
-    // Neutral colors
-    background: '#F2F2F7',   // iOS background
-    backgroundDark: '#000000',
-    
-    surface: '#FFFFFF',      // Card backgrounds
-    surfaceDark: '#1C1C1E',
-    
-    // Text colors
-    text: '#000000',
     textDark: '#FFFFFF',
-    textSecondary: '#6D6D80',
-    textSecondaryDark: '#8E8E93',
+    textSecondaryDark: '#CCCCCC',
     
-    // Border and separator colors
-    border: '#C6C6C8',
-    borderDark: '#38383A',
-    separator: '#E5E5EA',
-    separatorDark: '#38383A',
+    borderDark: '#404040',
+    separatorDark: '#404040',
     
-    // Input colors
-    placeholder: '#C7C7CC',
-    placeholderDark: '#48484A',
+    placeholder: '#888888',  // Maps to gray
+    placeholderDark: '#666666',
     
-    // Expense and Income colors
-    expense: '#FF3B30',      // Red for expenses
-    income: '#34C759',       // Green for income
+    // Expense and Income colors (using mint theme)
+    expense: '#FF5A5F',      // Error color for expenses
+    income: '#2ECC71',       // Success color for income
     
-    // Chart colors
+    // Chart colors (mint theme palette)
     chart: [
-      '#007AFF', '#5856D6', '#34C759', '#FF9500', 
-      '#FF3B30', '#8E8E93', '#5AC8FA', '#FFCC00'
+      '#A0DABB', '#CFFAE2', '#2E7D61', '#FFF3B0', 
+      '#FF5A5F', '#2ECC71', '#888888', '#E0E0E0'
     ],
   } as const;
   
   // ==========================================
-  // SPACING & SIZING
+  // 📐 SPACING & SIZING
   // ==========================================
   
   export const SPACING = {
@@ -186,28 +177,30 @@ export const EXPENSE_CATEGORIES = [
     md: 16,
     lg: 24,
     xl: 32,
-    xxl: 48,
+    xxl: 40,  // Updated to match mint theme
   } as const;
   
   export const BORDER_RADIUS = {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-    round: 999,
+    sm: 8,    // Small
+    md: 12,   // Medium
+    input: 16, // Input
+    lg: 24,   // Card
+    xl: 24,   // Card (alias)
+    round: 999, // Full
   } as const;
   
   export const FONT_SIZE = {
     xs: 12,
-    sm: 14,
-    md: 16,
+    sm: 14,   // Caption
+    md: 16,   // Body
     lg: 18,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
+    xl: 20,   // H3
+    xxl: 28,  // H2
+    xxxl: 36, // H1
   } as const;
   
   export const FONT_WEIGHT = {
+    light: '300' as const,
     normal: '400' as const,
     medium: '500' as const,
     semibold: '600' as const,

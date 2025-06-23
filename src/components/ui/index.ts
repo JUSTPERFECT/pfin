@@ -10,5 +10,7 @@ export type { InputProps, InputSize, InputType } from './Input';
 export { default as Card } from './Card';
 export type { CardProps, CardVariant, CardPadding } from './Card';
 
+export { default as ThemeShowcase } from './ThemeShowcase';
+
 // TODO: Add more components as we create them
 // export { default as LoadingSpinner } from './LoadingSpinner';
